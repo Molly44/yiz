@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連結網站</title>
+    <style>
+       body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .button {
+            background-color: #ff842d;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            background-color: #fb6a02;
+        }
+
+        .button:active {
+            background-color: #fb6a02;
+        }
+
+        .button:disabled {
+            background-color: #d1d1d1;
+            cursor: not-allowed;
+        }
+
+        /* 進度條 */
+        #progressBarContainer {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            height: 10px;
+            background-color: #e0e0e0;
+            margin-top: 10px;
+        }
+
+        #progressBar {
+            height: 100%;
+            background-color: #fb6a02;
+            width: 0;
+        }
+
+        /* 加載文字 */
+        .loading {
+            font-size: 14px;
+            margin-top: 10px;
+            color: #888;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 20px;
+            }
+
+            .button {
+                padding: 12px 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>點擊下方按鈕，進入問卷</h2>
+    <a href="#" id="switchLink" onclick="switchLink(); return false;" class="button">點我進入問卷</a>
+    <p id="statusText" class="loading" style="display: none;">正在處理...</p>
+
+    <!-- 進度條容器 -->
+    <div id="progressBarContainer">
+        <div id="progressBar"></div>
+    </div>
+
+    <script>
+        const siteA = "https://lsurvey.nccu.edu.tw/limesurvey/index.php/681186?lang=zh-Hant-TW";
+        const siteB = "https://lsurvey.nccu.edu.tw/limesurvey/index.php/495924?lang=zh-Hant-TW";
+
+        // 儲存與讀取點擊次數和時間的管理模塊
+        const StorageManager = {
+            saveState: function (clickCount, lastClickTime) {
+                try {
+                    localStorage.setItem("clickCount", clickCount);
+                    localStorage.setItem("lastClickTime", lastClickTime);
+                } catch (e) {
+                    console.error("Storage save error:", e);
+                    alert("出現錯誤。請嘗試清理您的瀏覽器存儲。");
+                }
+            },
+            loadState: function () {
+                let clickCount = 0;
+                let lastClickTime = 0;
+                try {
+                    clickCount = parseInt(localStorage.getItem("clickCount")) || 0;
+                    lastClickTime = parseInt(localStorage.getItem("lastClickTime")) || 0;
+                } catch (e) {
+                    console.error("Storage load error:", e);
+                    alert("讀取出現錯誤，請嘗試使用其他瀏覽器");
+                }
+                return { clickCount, lastClickTime };
+            }
+        };
+
+        // 載入點擊次數和時間
+        let clickCount = 0;
+        let lastClickTime = 0;
+
+        const clickInterval = 1000; // 設置為 1000 毫秒，防止過快點擊
+
+        if (typeof(Storage) === "undefined") {
+            alert("您的瀏覽器不支持此問卷，請嘗試使用其他瀏覽器。");
+        } else {
+            const state = StorageManager.loadState();
+            clickCount = state.clickCount;
+            lastClickTime = state.lastClickTime;
+        }
+
+        // 顯示進度條
+        function showProgress() {
+            document.getElementById('progressBarContainer').style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                document.getElementById('progressBar').style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                }
+            }, 100);
+        }
+
+        function switchLink() {
+            const currentTime = new Date().getTime();
+
+            // 檢查點擊間隔
+            if (currentTime - lastClickTime < clickInterval) {
+                console.log("點擊過快，忽略此點擊");
+                return;
+            }
+
+            const button = document.getElementById('switchLink');
+            button.disabled = true;  // 禁用按鈕
+            document.getElementById('statusText').style.display = "block";  // 顯示處理中的文字
+            showProgress();  // 顯示進度條
+
+            lastClickTime = currentTime;
+            clickCount++;
+
+            // 隨機選擇網站
+            const selectedSite = Math.random() < 0.5 ? siteA : siteB;
+
+            // 設置 300ms 的延遲時間進行跳轉
+            setTimeout(() => {
+                window.location.href = selectedSite;  // 跳轉到隨機選擇的網站
+                // 儲存狀態
+                StorageManager.saveState(clickCount, lastClickTime);
+            }, 300);  // 300 毫秒後進行跳轉
+        }
+    </script>
+
+</body>
+</html>
+
